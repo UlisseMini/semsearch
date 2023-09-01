@@ -16,7 +16,7 @@ model.eval(); torch.set_grad_enabled(False)
 print('done')
 
 async def fetch_null_embeddings(conn):
-    return await conn.fetch("SELECT id, content FROM discord WHERE embedding IS NULL LIMIT 100")  # Fetching 100 at a time, you can adjust this number
+    return await conn.fetch("SELECT id, content FROM discord WHERE embedding IS NULL LIMIT 10")
 
 async def update_embeddings(conn, embeddings):
     await conn.executemany(
@@ -28,6 +28,7 @@ async def update_embeddings(conn, embeddings):
 async def embed_messages():
     conn = await asyncpg.connect(db_url)
 
+    throughput_avg = 0
     while True:
         records = await fetch_null_embeddings(conn)
         if not records:
@@ -46,9 +47,14 @@ async def embed_messages():
         print('done')
 
         print(f"Updating {len(sentence_embeddings)} records in the db...", flush=True, end=' ')
+        start = time.monotonic()
         embeddings = [(embedding.numpy().tolist(), record['id']) for record, embedding in zip(records, sentence_embeddings)]
         await update_embeddings(conn, embeddings)
-        print('done')
+        took = time.monotonic() - start
+        print(f'done in {took:.2f}s throughput: {len(sentence_embeddings) / took:.2f} records/s, avg: {throughput_avg:.2f} records/s')
+
+        # update throughput average with exponential moving average
+        throughput_avg = 0.9 * throughput_avg + 0.1 * (len(sentence_embeddings) / took)
 
     await conn.close()
 
