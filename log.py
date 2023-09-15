@@ -18,14 +18,14 @@ async def itable():
 
     await conn.execute('''
         CREATE TABLE IF NOT EXISTS discord (
-            id SERIAL PRIMARY KEY,
-            message_id BIGINT,
-            channel_id BIGINT,
-            server_id BIGINT,
-            timestamp TIMESTAMP WITHOUT TIME ZONE,
-            author TEXT,
-            author_id BIGINT,
-            content TEXT,
+            id SERIAL PRIMARY KEY NOT NULL,
+            message_id BIGINT NOT NULL,
+            channel_id BIGINT NOT NULL,
+            server_id BIGINT NOT NULL,
+            timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+            author TEXT NOT NULL,
+            author_id BIGINT NOT NULL,
+            content TEXT NOT NULL,
             reply_content TEXT,
             embed_json TEXT,
             embedding VECTOR(768)
